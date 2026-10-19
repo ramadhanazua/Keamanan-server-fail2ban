@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3 class="card-title">
+                        Data Management
+                    </h3>
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST">
+
+                        <div class="form-group">
+
+                            <label>
+                                Search Employee
+                            </label>
+
+                            <input
+                                type="text"
+                                name="keyword"
+                                class="form-control"
+                                value="{{ keyword }}"
+                                placeholder="Enter name or department"
+                            >
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Search
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if security_event %}
+
+    <div class="alert alert-danger">
+
+        <h5>
+            <i class="fas fa-shield-alt"></i>
+            Security Event Detected
+        </h5>
+
+        <hr>
+
+        <p>
+            <strong>Attack:</strong>
+            {{ security_event.attack_type }}
+        </p>
+
+        <p>
+            <strong>Source IP:</strong>
+            {{ security_event.source_ip }}
+        </p>
+
+        <p>
+            <strong>Endpoint:</strong>
+            {{ security_event.endpoint }}
+        </p>
+
+        <p>
+            <strong>Status:</strong>
+            {{ security_event.status }}
+        </p>
+
+        <p>
+            <strong>Action:</strong>
+            {{ security_event.action }}
+        </p>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if results %}
+
+    <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">
+                Search Results
+            </h3>
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead>
+
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for row in results %}
+
+                    <tr>
+
+                        <td>{{ row.id }}</td>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.department }}</td>
+                        <td>{{ row.email }}</td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,625 @@
+{% extends "layout.html" %}
+
+{% block title %}🛡️ SSH DoS Detection Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">🛡️ SSH DoS Detection Dashboard</h1>
+    
+    <div class="row">
+        <!-- Status SSH -->
+        <div class="col-md-6">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🔐 SSH Service Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="ssh-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading SSH status...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fail2Ban Status -->
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">🚫 Fail2Ban Status (All Jails)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="fail2ban-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading Fail2Ban status...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- Flood Detection -->
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">🚨 Flood Detection</h5>
+                </div>
+                <div class="card-body">
+                    <div id="flood-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Scanning for floods...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Iptables Stats -->
+        <div class="col-md-6">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">🔥 Firewall Rate Limit</h5>
+                </div>
+                <div class="card-body">
+                    <div id="iptables-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading firewall stats...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fail2Ban Jail Details -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">📋 Fail2Ban Jail Details</h5>
+                </div>
+                <div class="card-body">
+                    <div id="fail2ban-jails">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading jail details...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Suspicious IPs Table -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🌐 Suspicious IPs</h5>
+                    <div>
+                        <button class="btn btn-danger btn-sm me-2" onclick="blockAllIPs()">
+                            🚫 Block All Flooding IPs
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshData()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="suspicious-ips">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading IP data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function refreshData() {
+        // Reset loading state
+        document.getElementById('ssh-status').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading SSH status...</p>
+            </div>
+        `;
+        document.getElementById('flood-status').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Scanning for floods...</p>
+            </div>
+        `;
+        document.getElementById('fail2ban-status').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading Fail2Ban status...</p>
+            </div>
+        `;
+        document.getElementById('iptables-status').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading firewall stats...</p>
+            </div>
+        `;
+        document.getElementById('suspicious-ips').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading IP data...</p>
+            </div>
+        `;
+        document.getElementById('fail2ban-jails').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading jail details...</p>
+            </div>
+        `;
+        
+        updateStatus();
+    }
+    
+    function updateStatus() {
+        fetch('/dos/api/status')
+            .then(response => response.json())
+            .then(data => {
+                // Update SSH Status
+                updateSSHStatus(data);
+                
+                // Update Flood Detection
+                updateFloodStatus(data);
+                
+                // Update Fail2Ban
+                updateFail2BanStatus(data);
+                
+                // Update Fail2Ban Jail Details
+                updateFail2BanJails(data);
+                
+                // Update Iptables
+                updateIptablesStatus(data);
+                
+                // Update Suspicious IPs
+                updateSuspiciousIPs(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('suspicious-ips').innerHTML = `
+                    <div class="alert alert-danger">Error loading data: ${error.message}</div>
+                `;
+            });
+    }
+    
+    function updateSSHStatus(data) {
+        const sshStatus = document.getElementById('ssh-status');
+        const ssh = data.ssh;
+        
+        if (ssh.error) {
+            sshStatus.innerHTML = `<div class="alert alert-warning">${ssh.error}</div>`;
+            return;
+        }
+        
+        let statusClass = ssh.active ? 'success' : 'danger';
+        let statusText = ssh.active ? '✅ Active' : '❌ Inactive';
+        
+        sshStatus.innerHTML = `
+            <div class="alert alert-${statusClass}">
+                <strong>${statusText}</strong>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <small>PID: ${ssh.pid || 'N/A'}</small><br>
+                        <small>CPU: ${ssh.cpu_usage}</small><br>
+                        <small>Memory: ${ssh.memory_usage}</small>
+                    </div>
+                    <div class="col-6">
+                        <small>Connections: <strong>${ssh.connections}</strong></small><br>
+                        <small>Load Avg: ${ssh.load_average}</small>
+                    </div>
+                </div>
+                <small class="text-muted">Uptime: ${ssh.uptime}</small>
+            </div>
+        `;
+    }
+    
+    function updateFloodStatus(data) {
+        const floodStatus = document.getElementById('flood-status');
+        const floodIps = data.flood_ips;
+        
+        if (floodIps.error) {
+            floodStatus.innerHTML = `<div class="alert alert-warning">${floodIps.error}</div>`;
+            return;
+        }
+        
+        const floodCount = Object.keys(floodIps).filter(ip => {
+            const info = floodIps[ip];
+            return info && info.status === 'FLOOD_DETECTED';
+        }).length;
+        
+        const totalSuspicious = Object.keys(floodIps).length;
+        
+        if (floodCount > 0) {
+            floodStatus.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>🚨 FLOOD DETECTED!</strong>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <h3 class="mb-0">${floodCount}</h3>
+                            <small>IP(s) FLOODING</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-0">${totalSuspicious}</h3>
+                            <small>Total Suspicious</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger btn-sm mt-2" onclick="blockAllIPs()">
+                        🚫 Block All Flooding IPs
+                    </button>
+                </div>
+            `;
+        } else if (totalSuspicious > 0) {
+            floodStatus.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Suspicious Activity</strong>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <h3 class="mb-0">${totalSuspicious}</h3>
+                            <small>IP(s) with unusual activity</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            floodStatus.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ No Flood Detected</strong>
+                    <div class="mt-2">
+                        <small>All connections are normal</small>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function updateFail2BanStatus(data) {
+        const statusDiv = document.getElementById('fail2ban-status');
+        const f2b = data.fail2ban;
+        
+        if (f2b.error) {
+            statusDiv.innerHTML = `<div class="alert alert-warning">${f2b.error}</div>`;
+            return;
+        }
+        
+        if (f2b.active) {
+            const jailCount = f2b.jails ? f2b.jails.length : 0;
+            
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ Fail2Ban Active</strong>
+                    <div class="row mt-2">
+                        <div class="col-4">
+                            <h4 class="mb-0">${jailCount}</h4>
+                            <small>Active Jails</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0">${f2b.current_bans || 0}</h4>
+                            <small>Currently Banned</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="mb-0">${f2b.total_bans || 0}</h4>
+                            <small>Total Bans</small>
+                        </div>
+                    </div>
+                    ${f2b.banned_ips && f2b.banned_ips.length > 0 ? `
+                        <div class="mt-2">
+                            <small>Banned IPs: ${f2b.banned_ips.slice(0, 5).join(', ')}</small>
+                            ${f2b.banned_ips.length > 5 ? `<small> +${f2b.banned_ips.length - 5} more</small>` : ''}
+                        </div>
+                    ` : `<div class="mt-2"><small>No IPs currently banned</small></div>`}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Fail2Ban Inactive</strong>
+                    <div class="mt-2">
+                        <small>Enable Fail2Ban for better protection</small>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function updateFail2BanJails(data) {
+        const jailsDiv = document.getElementById('fail2ban-jails');
+        const f2b = data.fail2ban;
+        
+        if (f2b.error) {
+            jailsDiv.innerHTML = `<div class="alert alert-warning">${f2b.error}</div>`;
+            return;
+        }
+        
+        if (!f2b.active || !f2b.jails || f2b.jails.length === 0) {
+            jailsDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <h5>No Active Jails</h5>
+                    <small>No Fail2Ban jails are currently active</small>
+                </div>
+            `;
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Jail Name</th>
+                            <th>Currently Banned</th>
+                            <th>Total Banned</th>
+                            <th>Banned IPs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        f2b.jails.forEach(jail => {
+            const details = f2b.jail_details && f2b.jail_details[jail] ? f2b.jail_details[jail] : {};
+            const currentBans = details.currently_banned || 0;
+            const totalBans = details.total_banned || 0;
+            const bannedIps = details.banned_ips || [];
+            
+            // Highlight jail yang menggunakan Telegram
+            const isTelegram = jail.includes('dictionary') || jail.includes('bruteforce');
+            const rowClass = isTelegram ? 'table-info' : '';
+            
+            tableHTML += `
+                <tr class="${rowClass}">
+                    <td>
+                        <strong>${jail}</strong>
+                        ${isTelegram ? '<span class="badge bg-info ms-2">📱 Telegram</span>' : ''}
+                    </td>
+                    <td><span class="badge bg-${currentBans > 0 ? 'danger' : 'success'}">${currentBans}</span></td>
+                    <td>${totalBans}</td>
+                    <td>
+                        ${bannedIps.length > 0 ? 
+                            bannedIps.slice(0, 5).join(', ') + (bannedIps.length > 5 ? ` +${bannedIps.length - 5} more` : '') :
+                            '<small class="text-muted">None</small>'
+                        }
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        jailsDiv.innerHTML = tableHTML;
+    }
+    
+    function updateIptablesStatus(data) {
+        const statusDiv = document.getElementById('iptables-status');
+        const ipt = data.iptables;
+        
+        if (ipt.error) {
+            statusDiv.innerHTML = `<div class="alert alert-warning">${ipt.error}</div>`;
+            return;
+        }
+        
+        if (ipt.chain_exists) {
+            const totalDropped = ipt.dropped_ips ? ipt.dropped_ips.reduce((sum, item) => sum + item.count, 0) : 0;
+            
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✅ Rate Limit Active</strong>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <h4 class="mb-0">${totalDropped}</h4>
+                            <small>Packets Dropped</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0">${ipt.dropped_ips ? ipt.dropped_ips.length : 0}</h4>
+                            <small>IPs Blocked</small>
+                        </div>
+                    </div>
+                    ${ipt.dropped_ips && ipt.dropped_ips.length > 0 ? `
+                        <div class="mt-2">
+                            <small>Top blocked: ${ipt.dropped_ips.slice(0, 3).map(i => `${i.ip} (${i.count}x)`).join(', ')}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Rate Limit Not Active</strong>
+                    <div class="mt-2">
+                        <small>Run: /usr/local/bin/ssh-flood-protection.sh</small>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function updateSuspiciousIPs(data) {
+        const suspiciousDiv = document.getElementById('suspicious-ips');
+        const floodIps = data.flood_ips;
+        
+        if (floodIps.error) {
+            suspiciousDiv.innerHTML = `<div class="alert alert-warning">${floodIps.error}</div>`;
+            return;
+        }
+        
+        const ipKeys = Object.keys(floodIps);
+        
+        if (ipKeys.length === 0) {
+            suspiciousDiv.innerHTML = `
+                <div class="alert alert-info text-center">
+                    <h5>✅ No Suspicious IPs Detected</h5>
+                    <small>All SSH connections are within normal limits</small>
+                </div>
+            `;
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>Attempts (1m)</th>
+                            <th>Attempts (5m)</th>
+                            <th>Total</th>
+                            <th>First Seen</th>
+                            <th>Last Seen</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        // Sort by status (FLOOD_DETECTED first)
+        const sortedIps = ipKeys.sort((a, b) => {
+            const statusA = floodIps[a].status === 'FLOOD_DETECTED' ? 0 : 1;
+            const statusB = floodIps[b].status === 'FLOOD_DETECTED' ? 0 : 1;
+            return statusA - statusB;
+        });
+        
+        sortedIps.forEach(ip => {
+            const info = floodIps[ip];
+            if (!info || typeof info !== 'object') return;
+            
+            const statusClass = info.status === 'FLOOD_DETECTED' ? 'danger' : 
+                               info.status === 'HIGH' ? 'warning' : 'info';
+            const statusBadge = info.status === 'FLOOD_DETECTED' ? '🚨 FLOOD' :
+                               info.status === 'HIGH' ? '⚠️ HIGH' : '🔍 SUSPICIOUS';
+            
+            tableHTML += `
+                <tr>
+                    <td><code><strong>${ip}</strong></code></td>
+                    <td><span class="badge bg-${info.attempts_1m > 15 ? 'danger' : info.attempts_1m > 5 ? 'warning' : 'secondary'}">${info.attempts_1m}</span></td>
+                    <td><span class="badge bg-${info.attempts_5m > 30 ? 'danger' : info.attempts_5m > 10 ? 'warning' : 'secondary'}">${info.attempts_5m}</span></td>
+                    <td>${info.total_attempts}</td>
+                    <td><small>${info.first_seen}</small></td>
+                    <td><small>${info.last_seen}</small></td>
+                    <td><span class="badge bg-${statusClass}">${statusBadge}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="blockIP('${ip}')">
+                            🚫 Block
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        suspiciousDiv.innerHTML = tableHTML;
+    }
+    
+    function blockIP(ip) {
+        if (confirm(`Block IP ${ip}? This will drop all connections from this IP.`)) {
+            fetch('/dos/api/block', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ip: ip })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ IP ${ip} blocked successfully!`);
+                    refreshData();
+                } else {
+                    alert(`❌ Failed to block IP: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`❌ Error: ${error.message}`);
+            });
+        }
+    }
+    
+    function blockAllIPs() {
+        if (confirm('Block all FLOODING IPs?')) {
+            fetch('/dos/api/block-all', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ ${data.blocked} IP(s) blocked successfully!`);
+                    refreshData();
+                } else {
+                    alert(`❌ Failed to block IPs: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`❌ Error: ${error.message}`);
+            });
+        }
+    }
+    
+    // Update every 10 seconds
+    updateStatus();
+    setInterval(updateStatus, 10000);
+</script>
+
+<style>
+    .alert {
+        margin-bottom: 0;
+    }
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .badge {
+        font-size: 0.85rem;
+    }
+    code {
+        font-size: 0.9rem;
+    }
+</style>
+
+{% endblock %}

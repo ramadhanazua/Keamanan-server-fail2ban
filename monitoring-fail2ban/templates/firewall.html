@@ -1,0 +1,139 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2>Firewall Monitoring</h2>
+
+<div class="row">
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>Status</h5>
+
+{% if firewall.status=="Active" %}
+
+<span class="badge bg-success">ACTIVE</span>
+
+{% else %}
+
+<span class="badge bg-danger">INACTIVE</span>
+
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>Backend</h5>
+
+<h4>{{ firewall.backend }}</h4>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>Incoming</h5>
+
+<h4>{{ firewall.incoming }}</h4>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>Outgoing</h5>
+
+<h4>{{ firewall.outgoing }}</h4>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<br>
+
+<div class="card">
+
+<div class="card-header">
+
+Firewall Rules
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>No</th>
+
+<th>Port</th>
+
+<th>Action</th>
+
+<th>Source</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for rule in firewall.rules %}
+
+<tr>
+
+<td>{{ loop.index }}</td>
+
+<td>{{ rule.port }}</td>
+
+<td>{{ rule.action }}</td>
+
+<td>{{ rule.from }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

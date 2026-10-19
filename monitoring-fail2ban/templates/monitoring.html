@@ -1,0 +1,91 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+Monitoring SSH Log
+
+</h2>
+
+<div class="card">
+
+<div class="card-body">
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>Time</th>
+
+<th>IP Address</th>
+
+<th>Username</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for log in logs %}
+
+<tr>
+
+<td>
+
+{{ log.date }}
+
+</td>
+
+<td>
+
+{{ log.ip }}
+
+</td>
+
+<td>
+
+{{ log.username }}
+
+</td>
+
+<td>
+
+{% if log.status=="Failed Password" %}
+
+<span class="badge bg-danger">
+
+{{ log.status }}
+
+</span>
+
+{% else %}
+
+<span class="badge bg-warning text-dark">
+
+{{ log.status }}
+
+</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

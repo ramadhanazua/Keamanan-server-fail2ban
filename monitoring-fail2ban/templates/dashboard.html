@@ -1,0 +1,157 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<h2 class="mb-4">
+
+Linux Security Dashboard
+
+</h2>
+
+<div class="row">
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>
+
+CPU Usage
+
+</h5>
+
+<h2>
+
+{{ server.cpu }} %
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>
+
+RAM Usage
+
+</h5>
+
+<h2>
+
+{{ server.ram }} %
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>
+
+Disk Usage
+
+</h5>
+
+<h2>
+
+{{ server.disk }} %
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="card">
+
+<div class="card-body text-center">
+
+<h5>
+
+Server
+
+</h5>
+
+<span class="badge bg-success">
+
+ONLINE
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<hr>
+
+<div class="card mt-4">
+
+<div class="card-body">
+
+<table class="table">
+
+<tr>
+
+<th>Hostname</th>
+
+<td>{{ server.hostname }}</td>
+
+</tr>
+
+<tr>
+
+<th>Operating System</th>
+
+<td>{{ server.system }}</td>
+
+</tr>
+
+<tr>
+
+<th>Kernel</th>
+
+<td>{{ server.release }}</td>
+
+</tr>
+
+<tr>
+
+<th>Uptime</th>
+
+<td>{{ server.uptime }}</td>
+
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

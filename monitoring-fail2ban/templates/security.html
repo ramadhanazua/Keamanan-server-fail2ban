@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="card">
+
+<div class="card-header">
+
+<h4>Security Event</h4>
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>Time</th>
+
+<th>User</th>
+
+<th>IP</th>
+
+<th>File</th>
+
+<th>Status</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for row in data %}
+
+<tr>
+
+<td>{{row.tanggal}}</td>
+
+<td>{{row.username}}</td>
+
+<td>{{row.ip}}</td>
+
+<td>{{row.file}}</td>
+
+<td>
+
+<span class="badge bg-danger">
+
+{{row.status}}
+
+</span>
+
+</td>
+
+<td>{{row.action}}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,463 @@
+{% extends "layout.html" %}
+
+{% block title %}🛡️ ARP Spoofing / MITM Detection{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">🛡️ ARP Spoofing / MITM Detection</h1>
+    
+    <div class="row">
+        <!-- Status Overview -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📊 Status Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div id="overview-status">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading status...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Critical IPs -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">🔗 Critical IPs - ARP Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="critical-ips">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading ARP table...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- Events / Warnings -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🚨 Suspicious Events</h5>
+                    <div>
+                        <button class="btn btn-light btn-sm me-2" onclick="scanNetwork()">
+                            🔍 Scan Network
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshData()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="events-list">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading events...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- ARP Table -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">📋 Full ARP Table</h5>
+                </div>
+                <div class="card-body">
+                    <div id="arp-table">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading ARP table...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function refreshData() {
+        // Reset
+        document.getElementById('overview-status').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading status...</p>
+            </div>
+        `;
+        document.getElementById('critical-ips').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading ARP table...</p>
+            </div>
+        `;
+        document.getElementById('events-list').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading events...</p>
+            </div>
+        `;
+        document.getElementById('arp-table').innerHTML = `
+            <div class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading ARP table...</p>
+            </div>
+        `;
+        
+        updateStatus();
+    }
+    
+    function updateStatus() {
+        fetch('/arp/api/status')
+            .then(response => response.json())
+            .then(data => {
+                const arp = data.arp;
+                
+                // Update Overview
+                updateOverview(arp);
+                
+                // Update Critical IPs
+                updateCriticalIPs(arp);
+                
+                // Update Events
+                updateEvents(arp);
+                
+                // Update ARP Table
+                updateARPTable(arp);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('events-list').innerHTML = `
+                    <div class="alert alert-danger">Error loading data: ${error.message}</div>
+                `;
+            });
+    }
+    
+    function updateOverview(arp) {
+        const overviewDiv = document.getElementById('overview-status');
+        
+        let statusClass = 'success';
+        let statusText = '✅ No Suspicious Activity';
+        let statusIcon = '🟢';
+        
+        if (arp.status === 'CRITICAL') {
+            statusClass = 'danger';
+            statusText = '🚨 CRITICAL - ARP Spoofing Detected!';
+            statusIcon = '🔴';
+        } else if (arp.status === 'HIGH') {
+            statusClass = 'warning';
+            statusText = '⚠️ HIGH - Suspicious Activity Detected';
+            statusIcon = '🟠';
+        } else if (arp.status === 'ERROR') {
+            statusClass = 'secondary';
+            statusText = '❌ Error';
+            statusIcon = '⚪';
+        }
+        
+        overviewDiv.innerHTML = `
+            <div class="alert alert-${statusClass}">
+                <h4>${statusIcon} ${statusText}</h4>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <small>Last Check:</small><br>
+                        <small>${arp.timestamp ? new Date(arp.timestamp).toLocaleTimeString() : 'N/A'}</small>
+                    </div>
+                    <div class="col-6">
+                        <small>Events Detected:</small><br>
+                        <strong>${arp.events ? arp.events.length : 0}</strong>
+                    </div>
+                </div>
+                ${arp.warnings && arp.warnings.length > 0 ? `
+                    <div class="mt-2">
+                        <hr>
+                        ${arp.warnings.map(w => `<small class="text-danger">${w}</small><br>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    function updateCriticalIPs(arp) {
+        const criticalDiv = document.getElementById('critical-ips');
+        const arpTable = arp.arp_table || {};
+        
+        if (Object.keys(arpTable).length === 0) {
+            criticalDiv.innerHTML = `
+                <div class="alert alert-info">No critical IPs configured</div>
+            `;
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>MAC Address</th>
+                            <th>Status</th>
+                            <th>Known MAC</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const [ip, info] of Object.entries(arpTable)) {
+            const statusClass = info.status === 'CHANGED' ? 'danger' : 'success';
+            const statusText = info.status === 'CHANGED' ? '🚨 CHANGED' : '✅ OK';
+            
+            tableHTML += `
+                <tr>
+                    <td><strong>${ip}</strong></td>
+                    <td><code>${info.mac || 'UNKNOWN'}</code></td>
+                    <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                    <td><code>${info.known_mac || 'Not set'}</code></td>
+                    <td>
+                        ${info.status === 'CHANGED' ? `
+                            <button class="btn btn-sm btn-success" onclick="setKnownMAC('${ip}', '${info.mac}')">
+                                ✅ Set as Trusted
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-secondary" onclick="setKnownMAC('${ip}', '${info.mac}')">
+                                📝 Set Known MAC
+                            </button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        }
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        criticalDiv.innerHTML = tableHTML;
+    }
+    
+    function updateEvents(arp) {
+        const eventsDiv = document.getElementById('events-list');
+        const events = arp.events || [];
+        
+        if (events.length === 0) {
+            eventsDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h5>✅ No Suspicious Events</h5>
+                    <small>All ARP entries are consistent</small>
+                </div>
+            `;
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>IP(s)</th>
+                            <th>Details</th>
+                            <th>Severity</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        events.slice().reverse().forEach(event => {
+            const severityClass = event.severity === 'CRITICAL' ? 'danger' : 
+                                 event.severity === 'HIGH' ? 'warning' : 'info';
+            
+            let details = '';
+            if (event.type === 'MAC_CHANGE') {
+                details = `${event.old_mac} → ${event.new_mac}`;
+            } else if (event.type === 'DUPLICATE_MAC') {
+                details = `MAC: ${event.mac}<br>IPs: ${event.ips.join(', ')}`;
+            }
+            
+            tableHTML += `
+                <tr>
+                    <td><span class="badge bg-${event.type === 'MAC_CHANGE' ? 'primary' : 'warning'}">${event.type}</span></td>
+                    <td><strong>${event.ip || event.ips ? event.ips.join(', ') : 'N/A'}</strong></td>
+                    <td><small>${details}</small></td>
+                    <td><span class="badge bg-${severityClass}">${event.severity}</span></td>
+                    <td><small>${event.timestamp ? new Date(event.timestamp).toLocaleString() : 'N/A'}</small></td>
+                    <td>
+                        ${event.ip ? `
+                            <button class="btn btn-sm btn-success" onclick="ignoreAlert('${event.ip}')">
+                                ✅ Ignore
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        eventsDiv.innerHTML = tableHTML;
+    }
+    
+    function updateARPTable(arp) {
+        const tableDiv = document.getElementById('arp-table');
+        const arpTable = arp.arp_table || {};
+        
+        if (Object.keys(arpTable).length === 0) {
+            tableDiv.innerHTML = `
+                <div class="alert alert-info">No ARP entries available</div>
+            `;
+            return;
+        }
+        
+        let tableHTML = `
+            <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>MAC Address</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const [ip, info] of Object.entries(arpTable)) {
+            const statusClass = info.status === 'CHANGED' ? 'table-danger' : '';
+            const statusText = info.status === 'CHANGED' ? '⚠️ Changed' : '✅ OK';
+            
+            tableHTML += `
+                <tr class="${statusClass}">
+                    <td><strong>${ip}</strong></td>
+                    <td><code>${info.mac || 'UNKNOWN'}</code></td>
+                    <td><small>${statusText}</small></td>
+                </tr>
+            `;
+        }
+        
+        tableHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        tableDiv.innerHTML = tableHTML;
+    }
+    
+    function setKnownMAC(ip, mac) {
+        if (!confirm(`Set known MAC for ${ip} as ${mac}?`)) return;
+        
+        fetch('/arp/api/set-known-mac', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip: ip, mac: mac })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Known MAC set for ${ip}`);
+                refreshData();
+            } else {
+                alert(`❌ Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`❌ Error: ${error.message}`);
+        });
+    }
+    
+    function ignoreAlert(ip) {
+        if (!confirm(`Ignore alerts for IP ${ip}?`)) return;
+        
+        fetch('/arp/api/alert-ignore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip: ip })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`✅ Alerts ignored for ${ip}`);
+                refreshData();
+            } else {
+                alert(`❌ Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`❌ Error: ${error.message}`);
+        });
+    }
+    
+    function scanNetwork() {
+        fetch('/arp/api/scan', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Network scan completed');
+                refreshData();
+            } else {
+                alert(`❌ Error: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`❌ Error: ${error.message}`);
+        });
+    }
+    
+    // Update every 10 seconds
+    updateStatus();
+    setInterval(updateStatus, 10000);
+</script>
+
+<style>
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .badge {
+        font-size: 0.85rem;
+    }
+    code {
+        font-size: 0.9rem;
+    }
+</style>
+
+{% endblock %}

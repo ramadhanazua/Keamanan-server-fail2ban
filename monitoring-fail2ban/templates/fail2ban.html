@@ -1,0 +1,334 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <h2 class="mb-4">
+        <i class="fa-solid fa-shield-halved"></i>
+        Fail2Ban Monitoring
+    </h2>
+
+
+    <!-- SUMMARY -->
+
+    <div class="row">
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <small>Jail Active</small>
+
+                    <h2>{{ jail }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <small>Total Failed</small>
+
+                    <h2>{{ failed }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <small>Banned IP</small>
+
+                    <h2>{{ banned }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-md-3">
+
+            <div class="card">
+
+                <div class="card-body">
+
+                    <small>Attacker</small>
+
+                    <h2>{{ total }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- JAIL STATUS -->
+
+    <div class="card mt-4">
+
+        <div class="card-header">
+
+            <strong>
+                <i class="fa-solid fa-list"></i>
+                Jail Status
+            </strong>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <table class="table table-bordered">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>Jail</th>
+
+                        <th>Jenis Serangan</th>
+
+                        <th>Failed</th>
+
+                        <th>Currently Banned</th>
+
+                        <th>Total Banned</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for row in jails %}
+
+                    <tr>
+
+                        <td>
+                            {{ row.jail }}
+                        </td>
+
+                        <td>
+
+                            {% if row.jenis == "Brute Force" %}
+
+                                <span class="badge bg-danger">
+                                    Brute Force
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Dictionary Attack
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ row.total_failed }}
+                        </td>
+
+                        <td>
+                            {{ row.currently_banned }}
+                        </td>
+
+                        <td>
+                            {{ row.total_banned }}
+                        </td>
+
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="text-center"
+                        >
+
+                            Tidak ada jail aktif.
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ATTACKER -->
+
+    <div class="card mt-4">
+
+        <div class="card-header">
+
+            <strong>
+                <i class="fa-solid fa-user-secret"></i>
+                Banned Attacker
+            </strong>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <table class="table table-bordered table-hover">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>No</th>
+
+                        <th>IP Address</th>
+
+                        <th>Jenis Serangan</th>
+
+                        <th>Jail</th>
+
+                        <th>Status</th>
+
+                        <th>Aksi</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for row in attacker %}
+
+                    <tr>
+
+                        <td>
+                            {{ row.no }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ row.ip }}
+                            </strong>
+                        </td>
+
+                        <td>
+
+                            {% if row.jenis == "Brute Force" %}
+
+                                <span class="badge bg-danger">
+                                    Brute Force
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Dictionary Attack
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-secondary">
+
+                                {{ row.jail }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <span class="badge bg-danger">
+
+                                {{ row.status }}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+
+                            <a
+                                href="{{ url_for(
+                                    'fail2ban.unban',
+                                    jail=row.jail,
+                                    ip=row.ip
+                                ) }}"
+                                class="btn btn-warning btn-sm"
+                                onclick="return confirm('Unban IP ini?')"
+                            >
+
+                                <i class="fa-solid fa-unlock"></i>
+
+                                Unban
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            class="text-center p-4"
+                        >
+
+                            Tidak ada IP yang sedang diblokir.
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

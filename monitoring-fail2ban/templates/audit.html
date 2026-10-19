@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}ISO File Security Monitoring{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fa fa-file-shield text-primary"></i>
+                ISO File Security Monitoring
+            </h2>
+            <p class="text-muted mb-0">
+                Monitoring aktivitas akses file ISO sensitif di
+                <code>/var/data/perusahaan/</code> menggunakan Auditd.
+            </p>
+        </div>
+        <div>
+            <span class="badge bg-dark fs-6">
+                <i class="fa fa-shield-halved"></i> Auditd
+            </span>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         SUMMARY CARDS
+    ====================================================== -->
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Total Event (24h)</small>
+                            <h2 class="fw-bold mb-0 mt-1">{{ events|length }}</h2>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="fa fa-list fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Access Granted</small>
+                            <h2 class="fw-bold text-success mb-0 mt-1">
+                                {{ events|selectattr("success", "equalto", "yes")|list|length }}
+                            </h2>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="fa fa-unlock fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Access Denied</small>
+                            <h2 class="fw-bold text-danger mb-0 mt-1">
+                                {{ events|selectattr("success", "equalto", "no")|list|length }}
+                            </h2>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded-circle p-3">
+                            <i class="fa fa-lock fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         INFO BOX - CARA KERJA
+    ====================================================== -->
+    <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+        <i class="fa fa-circle-info fa-lg me-3"></i>
+        <div>
+            <strong>Cara Kerja:</strong>
+            Auditd mencatat semua percobaan akses ke folder <code>/var/data/perusahaan/</code>.
+            <br>
+            <span class="badge bg-danger">ACCESS DENIED</span> = akses ditolak —
+            <span class="badge bg-warning text-dark">ACCESS GRANTED</span> = akses berhasil.
+        </div>
+    </div>
+
+    <!-- =====================================================
+         INFO BOX - RETENSI 24 JAM
+    ====================================================== -->
+    <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+        <i class="fa fa-clock fa-lg me-3"></i>
+        <div>
+            <strong>⏰ Retensi Data: 24 Jam</strong>
+            <br>
+            Tabel ini hanya menampilkan event <b>24 jam terakhir</b>.
+            Event yang lebih lama akan otomatis hilang dari tampilan.
+            <br>
+            <small class="text-muted">
+                Event tetap tersimpan di <code>/var/log/audit/audit.log</code>.
+            </small>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         EVENT TABLE
+    ====================================================== -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fa fa-file-shield"></i>
+                <strong>ISO Access Events (24 Jam Terakhir)</strong>
+            </div>
+            <button class="btn btn-sm btn-outline-light" onclick="location.reload()">
+                <i class="fa fa-rotate"></i> Refresh
+            </button>
+        </div>
+
+        <div class="card-body p-0">
+            {% if events %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">No</th>
+                            <th width="170">Waktu</th>
+                            <th>User</th>
+                            <th>File</th>
+                            <th>Process</th>
+                            <th>Syscall</th>
+                            <th>Result</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+
+                            <td>
+                                <small>
+                                    <i class="fa fa-clock text-muted"></i>
+                                    {{ event.time_formatted or event.time or 'N/A' }}
+                                </small>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="fa fa-user"></i> {{ event.auid }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if event.filename %}
+                                    <i class="fa fa-file text-primary"></i>
+                                    <code>{{ event.filename }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="badge bg-dark">
+                                    {{ event.process }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <code>{{ event.syscall }}</code>
+                            </td>
+
+                            <td>
+                                {% if event.success == "yes" %}
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-check"></i> SUCCESS
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fa fa-times"></i> FAILED
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if event.success == "yes" %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fa fa-triangle-exclamation"></i>
+                                        ACCESS GRANTED
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="fa fa-shield"></i>
+                                        ACCESS DENIED
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fa fa-shield-halved fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Tidak Ada Aktivitas Akses ISO</h5>
+                <p class="text-muted mb-0">
+                    Belum terdapat event dalam <b>24 jam terakhir</b>.
+                </p>
+                <small class="text-muted">
+                    Coba akses folder <code>/var/data/perusahaan/</code> sebagai user biasa.
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<title>Security Events</title>
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+<style>
+
+body {
+    background: #f1f5f9;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+}
+
+.table {
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 12px;
+}
+
+.payload {
+    max-width: 250px;
+    word-break: break-word;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container-fluid p-4">
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h4 class="mb-0">
+                Security Event Monitoring
+            </h4>
+
+            <small class="text-muted">
+                Monitoring dan pencatatan aktivitas keamanan server
+            </small>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover">
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>No</th>
+
+                            <th>Waktu</th>
+
+                            <th>IP Address</th>
+
+                            <th>Username</th>
+
+                            <th>Jenis Serangan</th>
+
+                            <th>Endpoint</th>
+
+                            <th>Payload</th>
+
+                            <th>File</th>
+
+                            <th>Process</th>
+
+                            <th>Syscall</th>
+
+                            <th>Access</th>
+
+                            <th>Status</th>
+
+                            <th>Action</th>
+
+                            <th>Risk</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for event in events %}
+
+                        <tr>
+
+                            <td>
+                                {{ loop.index }}
+                            </td>
+
+                            <td>
+                                {{ event.tanggal.strftime('%d-%m-%Y %H:%M:%S') if event.tanggal else '-' }}
+                            </td>
+
+                            <td>
+                                {{ event.ip or '-' }}
+                            </td>
+
+                            <td>
+                                {{ event.username or '-' }}
+                            </td>
+
+                            <td>
+
+                                {% if event.attack_type == "SQL Injection" %}
+
+                                    <span class="badge bg-danger">
+                                        SQL Injection
+                                    </span>
+
+                                {% elif event.attack_type == "Cross-Site Scripting (XSS)" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        XSS
+                                    </span>
+
+                                {% elif event.attack_type == "Privilege Escalation" %}
+
+                                    <span class="badge bg-danger">
+                                        Privilege Escalation
+                                    </span>
+
+                                {% elif event.attack_type == "Denial of Service (DoS)" %}
+
+                                    <span class="badge bg-danger">
+                                        DoS
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        {{ event.attack_type }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ event.endpoint or '-' }}
+                            </td>
+
+                            <td class="payload">
+
+                                {{ event.payload or '-' }}
+
+                            </td>
+
+                            <td>
+
+                                {% if event.file and event.file != "-" %}
+
+                                    <code>
+                                        {{ event.file }}
+                                    </code>
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ event.process or '-' }}
+                            </td>
+
+                            <td>
+                                {{ event.syscall or '-' }}
+                            </td>
+
+                            <td>
+
+                                {% if event.access == "DENIED" %}
+
+                                    <span class="badge bg-danger">
+                                        DENIED
+                                    </span>
+
+                                {% elif event.access == "ALLOWED" %}
+
+                                    <span class="badge bg-success">
+                                        ALLOWED
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        {{ event.access or '-' }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-warning text-dark">
+
+                                    {{ event.status or '-' }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <span class="badge bg-danger">
+
+                                    {{ event.action or '-' }}
+
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {% if event.risk == "CRITICAL" %}
+
+                                    <span class="badge bg-danger">
+                                        CRITICAL
+                                    </span>
+
+                                {% elif event.risk == "HIGH" %}
+
+                                    <span class="badge bg-danger">
+                                        HIGH
+                                    </span>
+
+                                {% elif event.risk == "MEDIUM" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        MEDIUM
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        {{ event.risk or '-' }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="14"
+                                class="text-center">
+
+                                Belum terdapat security event.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
